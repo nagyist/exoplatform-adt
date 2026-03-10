@@ -191,12 +191,19 @@ function pageFooter() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
       });
 
-      // Initialize Bootstrap popovers
+      // Initialize Bootstrap popovers with HTML support
       var popoverTriggerList = [].slice.call(document.querySelectorAll('[rel=popover]'));
       var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl, {
           trigger: 'hover',
-          html: true
+          html: true,
+          sanitize: false,
+          container: 'body',
+          animation: true,
+          delay: {
+            show: 100,
+            hide: 100
+          }
         });
       });
     });
@@ -745,31 +752,63 @@ function componentProductVersion ($deployment_descriptor) {
  *
  * @return string html markup
  */
-function componentProductHtmlPopover ($deployment_descriptor) {
-  $content = '<strong>Product:</strong> '.componentProductHtmlLabel($deployment_descriptor).'<br/>';
-  $content .= '<strong>Version:</strong> '.$deployment_descriptor->PRODUCT_VERSION.'<br/>';
-  $content .= '<strong>Packaging:</strong> '.$deployment_descriptor->DEPLOYMENT_APPSRV_TYPE.'&nbsp;'.componentAppServerIcon($deployment_descriptor).'<br/>';
-  $content .= '<strong>Database:</strong> '.$deployment_descriptor->DATABASE.'<br/>';
-  $content .= '<strong>Visibility:</strong> '.$deployment_descriptor->DEPLOYMENT_APACHE_SECURITY.'&nbsp;'.componentVisibilityIcon($deployment_descriptor);
-  $content .= "<br/><strong>HTTPS available:</strong> " . ($deployment_descriptor->DEPLOYMENT_APACHE_HTTPS_ENABLED ? "yes" : "no");
-  $content .= "<br/><strong>ES embedded:</strong> " . ($deployment_descriptor->DEPLOYMENT_ES_EMBEDDED ? "yes" : "no");
-  $content .= "<br/><strong>OnlyOffice addon:</strong> " . ($deployment_descriptor->DEPLOYMENT_ONLYOFFICE_DOCUMENTSERVER_ENABLED ? "yes" : "no");
-  $content .= "<br/><strong>CMIS Server:</strong> " . ($deployment_descriptor->DEPLOYMENT_CMISSERVER_ENABLED ? "yes" : "no");
-  if ($deployment_descriptor->DEPLOYMENT_CHAT_ENABLED ) {
-    $content .= "<br/><strong>Chat embedded:</strong> " . ($deployment_descriptor->DEPLOYMENT_CHAT_EMBEDDED ? "yes" : "no");
-    $content .= "<br/><strong>Mongo db version:</strong> " . $deployment_descriptor->DEPLOYMENT_CHAT_MONGODB_VERSION;
+function componentProductHtmlPopover($deployment_descriptor) {
+  $content = '<div class="popover-content" style="min-width: 250px;">';
+  $content .= '<strong>Product:</strong> ' . componentProductHtmlLabel($deployment_descriptor) . '<br>';
+  $content .= '<strong>Version:</strong> ' . $deployment_descriptor->PRODUCT_VERSION . '<br>';
+  $content .= '<strong>Packaging:</strong> ' . $deployment_descriptor->DEPLOYMENT_APPSRV_TYPE . ' ';
+  $content .= '<i class="fas fa-server"></i><br>';
+  $content .= '<strong>Database:</strong> ' . $deployment_descriptor->DATABASE . '<br>';
+  $content .= '<strong>Visibility:</strong> ' . $deployment_descriptor->DEPLOYMENT_APACHE_SECURITY . ' ';
+  
+  if ($deployment_descriptor->DEPLOYMENT_APACHE_SECURITY === "public") {
+    $content .= '<i class="fas fa-globe text-success"></i>';
+  } else {
+    $content .= '<i class="fas fa-lock text-warning"></i>';
   }
-  //SWF-3125: Use Apache version to know if WebSocket can be enabled.
-  $content .= "<br/><strong>WebSocket available:</strong> " . ((strcmp($deployment_descriptor->ACCEPTANCE_APACHE_VERSION_MINOR, "2.4") == 0 && $deployment_descriptor->DEPLOYMENT_APACHE_WEBSOCKET_ENABLED) ? "yes" : "no");
-  $content .= "<br/><strong>Virtual Host:</strong> " . preg_replace("/https?:\/\/(.*)/", "$1", $deployment_descriptor->DEPLOYMENT_URL);
+  
+  $content .= '<br>';
+  $content .= '<strong>HTTPS:</strong> ' . ($deployment_descriptor->DEPLOYMENT_APACHE_HTTPS_ENABLED ? 
+    '<i class="fas fa-lock text-success"></i> yes' : 
+    '<i class="fas fa-unlock text-muted"></i> no');
+  
+  $content .= '<br><strong>ES embedded:</strong> ' . ($deployment_descriptor->DEPLOYMENT_ES_EMBEDDED ? 
+    '<i class="fas fa-check text-success"></i> yes' : 
+    '<i class="fas fa-times text-danger"></i> no');
+  
+  $content .= '<br><strong>OnlyOffice:</strong> ' . ($deployment_descriptor->DEPLOYMENT_ONLYOFFICE_DOCUMENTSERVER_ENABLED ? 
+    '<i class="fas fa-check text-success"></i> yes' : 
+    '<i class="fas fa-times text-danger"></i> no');
+  
+  $content .= '<br><strong>CMIS Server:</strong> ' . ($deployment_descriptor->DEPLOYMENT_CMISSERVER_ENABLED ? 
+    '<i class="fas fa-check text-success"></i> yes' : 
+    '<i class="fas fa-times text-danger"></i> no');
+  
+  if ($deployment_descriptor->DEPLOYMENT_CHAT_ENABLED) {
+    $content .= '<br><strong>Chat embedded:</strong> ' . ($deployment_descriptor->DEPLOYMENT_CHAT_EMBEDDED ? 
+      '<i class="fas fa-check text-success"></i> yes' : 
+      '<i class="fas fa-times text-danger"></i> no');
+    $content .= '<br><strong>MongoDB:</strong> v' . $deployment_descriptor->DEPLOYMENT_CHAT_MONGODB_VERSION;
+  }
+  
+  $content .= '<br><strong>WebSocket:</strong> ' . ((strcmp($deployment_descriptor->ACCEPTANCE_APACHE_VERSION_MINOR, '2.4') == 0 && 
+    $deployment_descriptor->DEPLOYMENT_APACHE_WEBSOCKET_ENABLED) ? 
+    '<i class="fas fa-check text-success"></i> yes' : 
+    '<i class="fas fa-times text-danger"></i> no');
+  
+  $content .= '<br><strong>Virtual Host:</strong> ' . preg_replace('/https?:\/\/(.*)/', '$1', $deployment_descriptor->DEPLOYMENT_URL);
+  
   if ($deployment_descriptor->DEPLOYMENT_APACHE_VHOST_ALIAS) {
-      $content .= "<br/><strong>Virtual Host Alias:</strong> " . $deployment_descriptor->DEPLOYMENT_APACHE_VHOST_ALIAS;
+    $content .= '<br><strong>Alias:</strong> ' . $deployment_descriptor->DEPLOYMENT_APACHE_VHOST_ALIAS;
   }
+  
   if ($deployment_descriptor->DEPLOYMENT_INFO) {
-      $content .= "<hr/><strong>Info:</strong> " . $deployment_descriptor->DEPLOYMENT_INFO;
+    $content .= '<hr><strong>Info:</strong> ' . $deployment_descriptor->DEPLOYMENT_INFO;
   }
-  $content .= "<br/>";
-  return htmlentities($content);
+  
+  $content .= '</div>';
+  
+  return $content;
 }
 
 /**
