@@ -48,7 +48,7 @@ do_start_mongo_express() {
 
   # Ensure there is no container with the same name
   delete_docker_container ${DEPLOYMENT_MONGO_EXPRESS_CONTAINER_NAME}
-  local mongo_ip_addr=$(${DOCKER_CMD} inspect --format '{{ .NetworkSettings.IPAddress }}' ${DEPLOYMENT_CHAT_MONGODB_CONTAINER_NAME})
+  local mongo_ip_addr=$(${DOCKER_CMD} inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${DEPLOYMENT_CHAT_MONGODB_CONTAINER_NAME})
   ${DOCKER_CMD} run \
     -d \
     -e ME_CONFIG_BASICAUTH_ENABLED="false" \
