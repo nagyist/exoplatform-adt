@@ -1417,6 +1417,9 @@ do_dump_dataset(){
   if ${DEPLOYMENT_KEYCLOAK_ENABLED}; then
     do_dump_keycloak_dataset "${_dumpdir}"
   fi
+  if ${DEPLOYMENT_MATRIX_ENABLED}; then
+    do_dump_matrix_dataset "${_dumpdir}"
+  fi
   mkdir -p ${_dumpdir}/codec
   if [ -f ${DEPLOYMENT_DIR}/${DEPLOYMENT_CODEC_DIR}/codeckey.txt ]; then
     echo_info "Backing up codec file ${DEPLOYMENT_DIR}/${DEPLOYMENT_CODEC_DIR}/codeckey.txt ..."
@@ -1438,6 +1441,9 @@ do_dump_dataset(){
   if ${DEPLOYMENT_KEYCLOAK_ENABLED}; then
     _bakcupExt="${_bakcupExt} keycloak"
   fi 
+  if ${DEPLOYMENT_MATRIX_ENABLED}; then
+    _bakcupExt="${_bakcupExt} matrix_${INSTANCE_KEY}"
+  fi
   _bakcupExt="$(echo ${_bakcupExt} | xargs -r)"
   display_time ${NICE_CMD} tar ${TAR_BZIP2_COMPRESS_PRG} --directory "${_dumpdir}" -cf ${DS_DIR}/${DS_FILENAME}.tar.bz2 exo search backup.sql codec ${_bakcupExt}
   echo_info "Done."
@@ -1494,11 +1500,9 @@ do_restore_dataset(){
   do_restore_es_dataset
 
   if ${DEPLOYMENT_MATRIX_ENABLED}; then
-    if do_reset_matrix_plf_database; then 
-      do_reset_matrix_data
-    else 
-      echo_warn "An error occurred while resetting the matrix initialization on plf database. Skipping matrix data reset."
-    fi
+    do_restore_matrix_dataset || 
+    (do_reset_matrix_plf_database && do_reset_matrix_data) ||
+    echo_warn "Failed to restore or reset matrix data"
   fi
 
   rm -rf ${DEPLOYMENT_DIR}/${DEPLOYMENT_DATA_DIR}/_restore
